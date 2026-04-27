@@ -41,7 +41,11 @@ void DxLibCommon::Initialize()
 	material.Power = 20.0f;
 	SetMaterialParam(material);
 
+	// ライトをカメラ方向から当たるよう設定（デフォルトの真下ライトだとカメラ側の面が暗くなる）
+	ChangeLightTypeDir(VGet(0.0f, -1.0f, 1.0f));
 
+	// カメラのクリップ距離を明示設定
+	SetCameraNearFar(0.1f, 1000.0f);
 }
 
 bool DxLibCommon::FailInitialize()
@@ -84,6 +88,23 @@ void DxLibCommon::DrawLabel(const char* str, int x, int y)
 
 int DxLibCommon::GetScreenWidth() const { return screenWidth_; }
 int DxLibCommon::GetScreenHeight() const { return screenHeight_; }
+
+unsigned int DxLibCommon::MakeColor(int r, int g, int b) {
+	return GetColor(r, g, b);
+}
+
+void DxLibCommon::SetCamera(Vector3 position, Vector3 target) {
+	SetCameraPositionAndTarget_UpVecY(
+		VGet(position.x, position.y, position.z),
+		VGet(target.x,   target.y,   target.z)
+	);
+}
+
+void DxLibCommon::DrawCube(Vector3 position, Vector3 scale, unsigned int color) {
+	VECTOR minPos = VGet(position.x - scale.x * 0.5f, position.y - scale.y * 0.5f, position.z - scale.z * 0.5f);
+	VECTOR maxPos = VGet(position.x + scale.x * 0.5f, position.y + scale.y * 0.5f, position.z + scale.z * 0.5f);
+	DrawCube3D(minPos, maxPos, color, GetColor(255, 255, 255), TRUE);
+}
 
 #ifdef _DEBUG
 bool DxLibCommon::IsCurrentDxLibVer(int requireVersion)

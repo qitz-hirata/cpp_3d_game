@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include "Vector3.h"
 
 /// <summary>
 /// 神がかってるヘッダ「DxLib.h」をmainで読み込ませないためのクラス
@@ -52,6 +53,10 @@ public:
 
 	int GetScreenWidth() const;
 	int GetScreenHeight() const;
+
+	unsigned int MakeColor(int r, int g, int b);
+	void SetCamera(Vector3 position, Vector3 target);
+	void DrawCube(Vector3 position, Vector3 scale, unsigned int color);
 
 #ifdef _DEBUG
 	/// <summary>

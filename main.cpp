@@ -5,6 +5,7 @@
 
 #include "DxLibCommon.h"
 #include "Vector3.h"
+#include "Cube.h"
 
 
 
@@ -42,6 +43,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         return -1;
     }
 
+    // キューブの生成と初期化
+    Cube cube;
+    cube.transform.position   = { 0.0f, 0.0f, 0.0f };
+    cube.transform.localScale = { 2.0f, 2.0f, 2.0f };
+    cube.Initialize(dxLibCommon);
+
     // メインループ
     while (dxLibCommon->Running())
     {
@@ -50,8 +57,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         // 描画ここから↓
 
+        dxLibCommon->SetCamera({ 0.0f, 5.0f, -10.0f }, { 0.0f, 0.0f, 0.0f });
+        cube.Draw(dxLibCommon);
+
         // 描画ここまで↑
-        
+
         // 描画の後処理
         dxLibCommon->PostDraw();
 
