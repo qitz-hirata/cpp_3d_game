@@ -1,10 +1,12 @@
 #pragma once
 #include "Transform.h"
+#include "GameObject.h"
 
 class DxLibCommon;
 
 class Cube {
 public:
+    GameObject   gameObject;
     Transform    transform;
     unsigned int color = 0xFFFFFF;
 
