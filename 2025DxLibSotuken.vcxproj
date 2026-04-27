@@ -145,6 +145,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DxLibCommon.h" />
+    <ClInclude Include="GameObject.h" />
+    <ClInclude Include="Quaternion.h" />
+    <ClInclude Include="Transform.h" />
+    <ClInclude Include="Vector3.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
