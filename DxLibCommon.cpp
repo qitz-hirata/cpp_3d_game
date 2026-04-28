@@ -106,6 +106,9 @@ void DxLibCommon::DrawCube(Vector3 position, Vector3 scale, unsigned int color) 
 	DrawCube3D(minPos, maxPos, color, GetColor(255, 255, 255), TRUE);
 }
 
+bool DxLibCommon::IsLeftKeyDown()  { return CheckHitKey(KEY_INPUT_LEFT)  != 0; }
+bool DxLibCommon::IsRightKeyDown() { return CheckHitKey(KEY_INPUT_RIGHT) != 0; }
+
 #ifdef _DEBUG
 bool DxLibCommon::IsCurrentDxLibVer(int requireVersion)
 {

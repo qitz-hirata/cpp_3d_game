@@ -58,6 +58,9 @@ public:
 	void SetCamera(Vector3 position, Vector3 target);
 	void DrawCube(Vector3 position, Vector3 scale, unsigned int color);
 
+	bool IsLeftKeyDown();
+	bool IsRightKeyDown();
+
 #ifdef _DEBUG
 	/// <summary>
 	/// DxLibのバージョンチェック用。Releaseでは不要

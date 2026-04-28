@@ -49,9 +49,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     cube.transform.localScale = { 2.0f, 2.0f, 2.0f };
     cube.Initialize(dxLibCommon);
 
+    static const float kMoveSpeed = 0.05f;
+
     // メインループ
     while (dxLibCommon->Running())
     {
+        // キー入力でCubeを左右に移動
+        if (dxLibCommon->IsLeftKeyDown())  { cube.transform.position.x -= kMoveSpeed; }
+        if (dxLibCommon->IsRightKeyDown()) { cube.transform.position.x += kMoveSpeed; }
 
         dxLibCommon->PreDraw();
 
