@@ -106,8 +106,19 @@ void DxLibCommon::DrawCube(Vector3 position, Vector3 scale, unsigned int color) 
 	DrawCube3D(minPos, maxPos, color, GetColor(255, 255, 255), TRUE);
 }
 
-bool DxLibCommon::IsLeftKeyDown()  { return CheckHitKey(KEY_INPUT_LEFT)  != 0; }
-bool DxLibCommon::IsRightKeyDown() { return CheckHitKey(KEY_INPUT_RIGHT) != 0; }
+bool DxLibCommon::IsKeyDown(GameKey key) {
+	switch (key) {
+		case GameKey::Left:  return CheckHitKey(KEY_INPUT_LEFT)  != 0;
+		case GameKey::Right: return CheckHitKey(KEY_INPUT_RIGHT) != 0;
+		case GameKey::Up:    return CheckHitKey(KEY_INPUT_UP)    != 0;
+		case GameKey::Down:  return CheckHitKey(KEY_INPUT_DOWN)  != 0;
+		case GameKey::W:     return CheckHitKey(KEY_INPUT_W)     != 0;
+		case GameKey::A:     return CheckHitKey(KEY_INPUT_A)     != 0;
+		case GameKey::S:     return CheckHitKey(KEY_INPUT_S)     != 0;
+		case GameKey::D:     return CheckHitKey(KEY_INPUT_D)     != 0;
+		default:             return false;
+	}
+}
 
 #ifdef _DEBUG
 bool DxLibCommon::IsCurrentDxLibVer(int requireVersion)

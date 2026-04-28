@@ -1,4 +1,5 @@
 #include <Windows.h>
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <format>
@@ -49,20 +50,39 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     cube.transform.localScale = { 2.0f, 2.0f, 2.0f };
     cube.Initialize(dxLibCommon);
 
-    static const float kMoveSpeed = 0.05f;
+    static const float kMoveSpeed      = 0.05f;
+    static const float kCameraSpeed    = 0.02f;
+    static const float kCameraDistance = sqrtf(125.0f); // 初期位置 {0,5,-10} の距離
+    float cameraYaw   = 0.0f;
+    float cameraPitch = atan2f(5.0f, 10.0f); // 初期仰角
 
     // メインループ
     while (dxLibCommon->Running())
     {
-        // キー入力でCubeを左右に移動
-        if (dxLibCommon->IsLeftKeyDown())  { cube.transform.position.x -= kMoveSpeed; }
-        if (dxLibCommon->IsRightKeyDown()) { cube.transform.position.x += kMoveSpeed; }
+        // 矢印キーでCubeを移動 (左右=X軸, 上下=Z軸)
+        if (dxLibCommon->IsKeyDown(GameKey::Left))  { cube.transform.position.x -= kMoveSpeed; }
+        if (dxLibCommon->IsKeyDown(GameKey::Right)) { cube.transform.position.x += kMoveSpeed; }
+        if (dxLibCommon->IsKeyDown(GameKey::Up))    { cube.transform.position.z += kMoveSpeed; }
+        if (dxLibCommon->IsKeyDown(GameKey::Down))  { cube.transform.position.z -= kMoveSpeed; }
+
+        // WASDでカメラを回転 (A/D=Y軸, W/S=X軸)
+        if (dxLibCommon->IsKeyDown(GameKey::A)) { cameraYaw   -= kCameraSpeed; }
+        if (dxLibCommon->IsKeyDown(GameKey::D)) { cameraYaw   += kCameraSpeed; }
+        if (dxLibCommon->IsKeyDown(GameKey::W)) { cameraPitch += kCameraSpeed; }
+        if (dxLibCommon->IsKeyDown(GameKey::S)) { cameraPitch -= kCameraSpeed; }
+        cameraPitch = std::clamp(cameraPitch, -1.5f, 1.5f);
+
+        Vector3 cameraPos = {
+            kCameraDistance * sinf(cameraYaw) * cosf(cameraPitch),
+            kCameraDistance * sinf(cameraPitch),
+           -kCameraDistance * cosf(cameraYaw) * cosf(cameraPitch)
+        };
 
         dxLibCommon->PreDraw();
 
         // 描画ここから↓
 
-        dxLibCommon->SetCamera({ 0.0f, 5.0f, -10.0f }, { 0.0f, 0.0f, 0.0f });
+        dxLibCommon->SetCamera(cameraPos, { 0.0f, 0.0f, 0.0f });
         cube.Draw(dxLibCommon);
 
         // 描画ここまで↑

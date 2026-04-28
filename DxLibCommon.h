@@ -2,6 +2,8 @@
 #include <string>
 #include "Vector3.h"
 
+enum class GameKey { Left, Right, Up, Down, W, A, S, D };
+
 /// <summary>
 /// 神がかってるヘッダ「DxLib.h」をmainで読み込ませないためのクラス
 /// </summary>
@@ -58,8 +60,7 @@ public:
 	void SetCamera(Vector3 position, Vector3 target);
 	void DrawCube(Vector3 position, Vector3 scale, unsigned int color);
 
-	bool IsLeftKeyDown();
-	bool IsRightKeyDown();
+	bool IsKeyDown(GameKey key);
 
 #ifdef _DEBUG
 	/// <summary>
