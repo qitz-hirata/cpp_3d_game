@@ -7,6 +7,7 @@
 #include "DxLibCommon.h"
 #include "Vector3.h"
 #include "Cube.h"
+#include "CollisionManager.h"
 
 
 
@@ -44,11 +45,32 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         return -1;
     }
 
-    // キューブの生成と初期化
+    // キューブ1の生成と初期化 (矢印キーで操作)
     Cube cube;
     cube.transform.position   = { 0.0f, 0.0f, 0.0f };
     cube.transform.localScale = { 2.0f, 2.0f, 2.0f };
     cube.Initialize(dxLibCommon);
+    unsigned int defaultColor = cube.color;
+
+    // キューブ2の生成と初期化 (固定)
+    Cube cube2;
+    cube2.transform.position   = { 4.0f, 0.0f, 0.0f };
+    cube2.transform.localScale = { 2.0f, 2.0f, 2.0f };
+    cube2.Initialize(dxLibCommon);
+    unsigned int defaultColor2 = cube2.color;
+
+    unsigned int hitColor = dxLibCommon->MakeColor(255, 50, 50);
+
+    // コリジョンコールバックを登録
+    cube.onCollisionEnter = [&](GameObject other) { cube.color  = hitColor;     };
+    cube.onCollisionExit  = [&](GameObject other) { cube.color  = defaultColor; };
+    cube2.onCollisionEnter = [&](GameObject other) { cube2.color = hitColor;     };
+    cube2.onCollisionExit  = [&](GameObject other) { cube2.color = defaultColor2; };
+
+    // Cube を個別に登録 (登録済みの全 Cube とのペアが自動生成される)
+    CollisionManager collisionManager;
+    collisionManager.Register(&cube);
+    collisionManager.Register(&cube2);
 
     static const float kMoveSpeed      = 0.05f;
     static const float kCameraSpeed    = 0.02f;
@@ -78,12 +100,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
            -kCameraDistance * cosf(cameraYaw) * cosf(cameraPitch)
         };
 
+        collisionManager.Update();
+
         dxLibCommon->PreDraw();
 
         // 描画ここから↓
 
         dxLibCommon->SetCamera(cameraPos, { 0.0f, 0.0f, 0.0f });
         cube.Draw(dxLibCommon);
+        cube2.Draw(dxLibCommon);
 
         // 描画ここまで↑
 

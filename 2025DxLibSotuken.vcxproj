@@ -140,11 +140,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CollisionManager.cpp" />
     <ClCompile Include="Cube.cpp" />
     <ClCompile Include="DxLibCommon.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="Cube.h" />
     <ClInclude Include="DxLibCommon.h" />
     <ClInclude Include="GameObject.h" />
