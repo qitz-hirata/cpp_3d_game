@@ -69,6 +69,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     // Cube を個別に登録 (登録済みの全 Cube とのペアが自動生成される)
     CollisionManager collisionManager;
+    //collisonManagerで当たり判定を登録
     collisionManager.Register(&cube);
     collisionManager.Register(&cube2);
 
