@@ -1,12 +1,14 @@
 #include <Windows.h>
 #include <algorithm>
 #include <cassert>
+#include <chrono>
 #include <cmath>
 #include <format>
 
 #include "DxLibCommon.h"
 #include "Vector3.h"
 #include "Cube.h"
+#include "BulletManager.h"
 #include "CollisionManager.h"
 
 
@@ -73,6 +75,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     collisionManager.Register(&cube);
     collisionManager.Register(&cube2);
 
+    // 試験用Bullet: 原点から-Z方向へ飛ぶ、生存時間5秒
+    BulletManager bulletManager;
+    bulletManager.Add(dxLibCommon, { 0.0f, 0.0f, 0.0f }, BulletOwner::Ally, { 0.0f, 0.0f, -5.0f }, 5.0f);
+
+    auto prevTime = std::chrono::steady_clock::now();
+
     static const float kMoveSpeed      = 0.05f;
     static const float kCameraSpeed    = 0.02f;
     static const float kCameraDistance = sqrtf(125.0f); // 初期位置 {0,5,-10} の距離
@@ -82,6 +90,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // メインループ
     while (dxLibCommon->Running())
     {
+        auto now = std::chrono::steady_clock::now();
+        float deltaTime = std::chrono::duration<float>(now - prevTime).count();
+        prevTime = now;
+
         // 矢印キーでCubeを移動 (左右=X軸, 上下=Z軸)
         if (dxLibCommon->IsKeyDown(GameKey::Left))  { cube.transform.position.x -= kMoveSpeed; }
         if (dxLibCommon->IsKeyDown(GameKey::Right)) { cube.transform.position.x += kMoveSpeed; }
@@ -101,6 +113,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
            -kCameraDistance * cosf(cameraYaw) * cosf(cameraPitch)
         };
 
+        bulletManager.Update(deltaTime);
+
         collisionManager.Update();
 
         dxLibCommon->PreDraw();
@@ -110,6 +124,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         dxLibCommon->SetCamera(cameraPos, { 0.0f, 0.0f, 0.0f });
         cube.Draw(dxLibCommon);
         cube2.Draw(dxLibCommon);
+        bulletManager.Draw(dxLibCommon);
 
         // 描画ここまで↑
 
