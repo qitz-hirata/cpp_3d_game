@@ -34,3 +34,7 @@ void Bullet::Draw(DxLibCommon* dxLib) const {
 bool Bullet::IsAlive() const {
     return isAlive_;
 }
+
+void Bullet::Kill() {
+    isAlive_ = false;
+}

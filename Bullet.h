@@ -16,6 +16,7 @@ public:
     void Update(float deltaTime);
     void Draw(DxLibCommon* dxLib) const;
     bool IsAlive() const;
+    void Kill();
 
 private:
     float lifetime_ = 0.0f;

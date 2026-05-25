@@ -10,6 +10,9 @@ public:
     void Update(float deltaTime);
     void Draw(DxLibCommon* dxLib) const;
 
+    // target と AABB が重なる Ally 弾を1つ消して true を返す。当たりなしは false
+    bool CheckAndKillAllyHit(const Cube& target);
+
 private:
     std::vector<Bullet> bullets_;
 };

@@ -9,6 +9,7 @@
 #include "Vector3.h"
 #include "Cube.h"
 #include "BulletManager.h"
+#include "EnemyManager.h"
 #include "CollisionManager.h"
 
 
@@ -79,6 +80,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     BulletManager bulletManager;
     bulletManager.Add(dxLibCommon, { 0.0f, 0.0f, 0.0f }, BulletOwner::Ally, { 0.0f, 0.0f, -5.0f }, 5.0f);
 
+    // 試験用Enemy: Z=-8 から+Z方向へゆっくり移動
+    EnemyManager enemyManager;
+    enemyManager.Add(dxLibCommon, { 0.0f, 0.0f, -8.0f }, { 0.0f, 0.0f, 2.0f });
+
     auto prevTime = std::chrono::steady_clock::now();
 
     static const float kMoveSpeed      = 0.05f;
@@ -114,6 +119,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         };
 
         bulletManager.Update(deltaTime);
+        enemyManager.Update(deltaTime, bulletManager);
 
         collisionManager.Update();
 
@@ -125,6 +131,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         cube.Draw(dxLibCommon);
         cube2.Draw(dxLibCommon);
         bulletManager.Draw(dxLibCommon);
+        enemyManager.Draw(dxLibCommon);
 
         // 描画ここまで↑
 
