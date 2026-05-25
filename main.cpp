@@ -106,6 +106,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         if (dxLibCommon->IsKeyDown(GameKey::Down))  { cube.transform.position.z -= kMoveSpeed; }
 
         // WASDでカメラを回転 (A/D=Y軸, W/S=X軸)
+        /* カメラポジションの変更処理コメントアウト
+        
         if (dxLibCommon->IsKeyDown(GameKey::A)) { cameraYaw   -= kCameraSpeed; }
         if (dxLibCommon->IsKeyDown(GameKey::D)) { cameraYaw   += kCameraSpeed; }
         if (dxLibCommon->IsKeyDown(GameKey::W)) { cameraPitch += kCameraSpeed; }
@@ -117,6 +119,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             kCameraDistance * sinf(cameraPitch),
            -kCameraDistance * cosf(cameraYaw) * cosf(cameraPitch)
         };
+        */
 
         bulletManager.Update(deltaTime);
         enemyManager.Update(deltaTime, bulletManager);
