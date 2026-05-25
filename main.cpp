@@ -113,13 +113,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         if (dxLibCommon->IsKeyDown(GameKey::W)) { cameraPitch += kCameraSpeed; }
         if (dxLibCommon->IsKeyDown(GameKey::S)) { cameraPitch -= kCameraSpeed; }
         cameraPitch = std::clamp(cameraPitch, -1.5f, 1.5f);
-
+        */
         Vector3 cameraPos = {
             kCameraDistance * sinf(cameraYaw) * cosf(cameraPitch),
             kCameraDistance * sinf(cameraPitch),
            -kCameraDistance * cosf(cameraYaw) * cosf(cameraPitch)
         };
-        */
+        
 
         bulletManager.Update(deltaTime);
         enemyManager.Update(deltaTime, bulletManager);
