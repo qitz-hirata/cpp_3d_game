@@ -8,6 +8,7 @@
 #include "DxLibCommon.h"
 #include "Vector3.h"
 #include "Cube.h"
+#include "Player.h"
 #include "BulletManager.h"
 #include "EnemyManager.h"
 #include "CollisionManager.h"
@@ -48,37 +49,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         return -1;
     }
 
-    // キューブ1の生成と初期化 (矢印キーで操作)
-    Cube cube;
-    cube.transform.position   = { 0.0f, 0.0f, 0.0f };
-    cube.transform.localScale = { 2.0f, 2.0f, 2.0f };
-    cube.Initialize(dxLibCommon);
-    unsigned int defaultColor = cube.color;
+    // プレイヤーの生成と初期化
+    Player player;
+    player.cube.transform.position = { 0.0f, 0.0f, 0.0f };
+    player.Initialize(dxLibCommon);
+    unsigned int defaultPlayerColor = player.cube.color;
 
-    // キューブ2の生成と初期化 (固定)
-    Cube cube2;
-    cube2.transform.position   = { 4.0f, 0.0f, 0.0f };
-    cube2.transform.localScale = { 2.0f, 2.0f, 2.0f };
-    cube2.Initialize(dxLibCommon);
-    unsigned int defaultColor2 = cube2.color;
+
 
     unsigned int hitColor = dxLibCommon->MakeColor(255, 50, 50);
 
     // コリジョンコールバックを登録
-    cube.onCollisionEnter = [&](GameObject other) { cube.color  = hitColor;     };
-    cube.onCollisionExit  = [&](GameObject other) { cube.color  = defaultColor; };
-    cube2.onCollisionEnter = [&](GameObject other) { cube2.color = hitColor;     };
-    cube2.onCollisionExit  = [&](GameObject other) { cube2.color = defaultColor2; };
+    player.cube.onCollisionEnter = [&](GameObject other) { player.cube.color = hitColor;            };
+    player.cube.onCollisionExit  = [&](GameObject other) { player.cube.color = defaultPlayerColor;  };
+
 
     // Cube を個別に登録 (登録済みの全 Cube とのペアが自動生成される)
     CollisionManager collisionManager;
-    //collisonManagerで当たり判定を登録
-    collisionManager.Register(&cube);
-    collisionManager.Register(&cube2);
+    collisionManager.Register(&player.cube);
 
-    // 試験用Bullet: 原点から-Z方向へ飛ぶ、生存時間5秒
+
     BulletManager bulletManager;
-    bulletManager.Add(dxLibCommon, { 0.0f, 0.0f, 0.0f }, BulletOwner::Ally, { 0.0f, 0.0f, -5.0f }, 5.0f);
 
     // 試験用Enemy: Z=-8 から+Z方向へゆっくり移動
     EnemyManager enemyManager;
@@ -86,8 +77,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     auto prevTime = std::chrono::steady_clock::now();
 
-    static const float kMoveSpeed      = 0.05f;
-    static const float kCameraSpeed    = 0.02f;
     static const float kCameraDistance = sqrtf(125.0f); // 初期位置 {0,5,-10} の距離
     float cameraYaw   = 0.0f;
     float cameraPitch = atan2f(5.0f, 10.0f); // 初期仰角
@@ -99,21 +88,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         float deltaTime = std::chrono::duration<float>(now - prevTime).count();
         prevTime = now;
 
-        // 矢印キーでCubeを移動 (左右=X軸, 上下=Z軸)
-        if (dxLibCommon->IsKeyDown(GameKey::Left))  { cube.transform.position.x -= kMoveSpeed; }
-        if (dxLibCommon->IsKeyDown(GameKey::Right)) { cube.transform.position.x += kMoveSpeed; }
-        if (dxLibCommon->IsKeyDown(GameKey::Up))    { cube.transform.position.z += kMoveSpeed; }
-        if (dxLibCommon->IsKeyDown(GameKey::Down))  { cube.transform.position.z -= kMoveSpeed; }
+        player.Update(dxLibCommon, bulletManager, deltaTime);
 
-        // WASDでカメラを回転 (A/D=Y軸, W/S=X軸)
-        /* カメラポジションの変更処理コメントアウト
-        
-        if (dxLibCommon->IsKeyDown(GameKey::A)) { cameraYaw   -= kCameraSpeed; }
-        if (dxLibCommon->IsKeyDown(GameKey::D)) { cameraYaw   += kCameraSpeed; }
-        if (dxLibCommon->IsKeyDown(GameKey::W)) { cameraPitch += kCameraSpeed; }
-        if (dxLibCommon->IsKeyDown(GameKey::S)) { cameraPitch -= kCameraSpeed; }
-        cameraPitch = std::clamp(cameraPitch, -1.5f, 1.5f);
-        */
         Vector3 cameraPos = {
             kCameraDistance * sinf(cameraYaw) * cosf(cameraPitch),
             kCameraDistance * sinf(cameraPitch),
@@ -131,8 +107,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         // 描画ここから↓
 
         dxLibCommon->SetCamera(cameraPos, { 0.0f, 0.0f, 0.0f });
-        cube.Draw(dxLibCommon);
-        cube2.Draw(dxLibCommon);
+        player.Draw(dxLibCommon);
         bulletManager.Draw(dxLibCommon);
         enemyManager.Draw(dxLibCommon);
 

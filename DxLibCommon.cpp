@@ -116,6 +116,7 @@ bool DxLibCommon::IsKeyDown(GameKey key) {
 		case GameKey::A:     return CheckHitKey(KEY_INPUT_A)     != 0;
 		case GameKey::S:     return CheckHitKey(KEY_INPUT_S)     != 0;
 		case GameKey::D:     return CheckHitKey(KEY_INPUT_D)     != 0;
+		case GameKey::Space: return CheckHitKey(KEY_INPUT_SPACE) != 0;
 		default:             return false;
 	}
 }

@@ -2,7 +2,7 @@
 #include <string>
 #include "Vector3.h"
 
-enum class GameKey { Left, Right, Up, Down, W, A, S, D };
+enum class GameKey { Left, Right, Up, Down, W, A, S, D, Space };
 
 /// <summary>
 /// 神がかってるヘッダ「DxLib.h」をmainで読み込ませないためのクラス
