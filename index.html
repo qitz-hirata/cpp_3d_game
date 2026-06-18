@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Game Framework - プロジェクト見取り図</title>
+    <meta name="description" content="C++とDxLibを用いた3Dゲームフレームワークのアーキテクチャ、設計思想、ゲームループ、当たり判定システムの可視化ポートフォリオ。">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome (Icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Prism.js (Syntax Highlighting) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <!-- Mermaid.js -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0b14;
+            --bg-secondary: #0f1122;
+            --bg-card: rgba(255, 255, 255, 0.02);
+            --bg-card-hover: rgba(255, 255, 255, 0.04);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-color-hover: rgba(0, 240, 255, 0.3);
+            --primary: #00f0ff;
+            --primary-rgb: 0, 240, 255;
+            --secondary: #ad00ff;
+            --secondary-rgb: 173, 0, 255;
+            --text-main: #f1f3f9;
+            --text-muted: #8f9cae;
+            --glow-color: rgba(0, 240, 255, 0.2);
+            --alert-warning: rgba(239, 68, 68, 0.15);
+            --alert-warning-border: rgba(239, 68, 68, 0.4);
+            --alert-note: rgba(59, 130, 246, 0.15);
+            --alert-note-border: rgba(59, 130, 246, 0.4);
+            --font-display: 'Outfit', 'Noto Sans JP', sans-serif;
+            --font-sans: 'Inter', 'Noto Sans JP', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* 背景グロー */
+        .bg-glow {
+            position: absolute;
+            width: 60vw;
+            height: 60vw;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 240, 255, 0.05) 0%, rgba(173, 0, 255, 0.02) 50%, rgba(0, 0, 0, 0) 70%);
+            z-index: -1;
+            filter: blur(80px);
+            pointer-events: none;
+        }
+
+        .glow-1 { top: -10%; left: -20%; }
+        .glow-2 { top: 40%; right: -20%; }
+        .glow-3 { bottom: -10%; left: 10%; }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        section {
+            padding: 8rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 5rem;
+        }
+
+        .section-tag {
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            display: inline-block;
+            margin-bottom: 0.75rem;
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* ヘッダー */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid transparent;
+        }
+
+        header.scrolled {
+            background: rgba(10, 11, 20, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 4.5rem;
+        }
+
+        .logo {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            font-weight: 800;
+            text-decoration: none;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo i {
+            color: var(--primary);
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+        }
+
+        .logo span {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            position: relative;
+            padding: 0.5rem 0;
+        }
+
+        nav a:hover, nav a.active {
+            color: var(--text-main);
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.3s ease;
+        }
+
+        nav a:hover::after, nav a.active::after {
+            width: 100%;
+        }
+
+        /* ヒーローセクション */
+        .hero {
+            padding-top: 10rem;
+            padding-bottom: 6rem;
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            min-height: 85vh;
+        }
+
+        .hero-title {
+            font-family: var(--font-display);
+            font-size: 3.5rem;
+            line-height: 1.15;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-title span {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-desc {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            margin-bottom: 2.5rem;
+            line-height: 1.7;
+        }
+
+        .hero-meta {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .hero-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .hero-meta i {
+            color: var(--primary);
+        }
+
+        .hero-visual {
+            position: relative;
+        }
+
+        .visual-frame {
+            border-radius: 1rem;
+            padding: 8px;
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(173, 0, 255, 0.2));
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8);
+            transform: perspective(1000px) rotateY(-10deg) rotateX(5deg);
+            transition: transform 0.5s ease;
+        }
+
+        .visual-frame:hover {
+            transform: perspective(1000px) rotateY(0deg) rotateX(0deg);
+        }
+
+        .visual-frame img {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 0.75rem;
+        }
+
+        /* フォルダ構成ツリー（インタラクティブスプリット） */
+        .tree-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 3rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 1.25rem;
+            overflow: hidden;
+            height: 650px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        .tree-view {
+            padding: 2.5rem;
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .tree-details {
+            padding: 2.5rem;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .tree-details-empty {
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .tree-details-empty i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: rgba(255,255,255,0.05);
+        }
+
+        /* ツリーアイテムのスタイル */
+        .tree-node {
+            list-style: none;
+            margin-left: 1.5rem;
+            position: relative;
+        }
+
+        .tree-node::before {
+            content: '';
+            position: absolute;
+            top: -0.5rem;
+            left: -0.75rem;
+            width: 1px;
+            height: 1.5rem;
+            border-left: 1px dashed rgba(255,255,255,0.15);
+        }
+
+        .tree-node::after {
+            content: '';
+            position: absolute;
+            top: 1rem;
+            left: -0.75rem;
+            width: 0.75rem;
+            height: 1px;
+            border-top: 1px dashed rgba(255,255,255,0.15);
+        }
+
+        .tree-node-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .tree-node-label:hover {
+            background: var(--bg-card-hover);
+            color: var(--primary);
+        }
+
+        .tree-node-label.active {
+            background: rgba(0, 240, 255, 0.08);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .tree-node-label i {
+            width: 1.25rem;
+            text-align: center;
+        }
+
+        .tree-node-label.folder i {
+            color: #e2b765;
+        }
+
+        .tree-node-label.file i {
+            color: var(--text-muted);
+        }
+
+        .tree-node-label.file-cpp i { color: #f34b7d; }
+        .tree-node-label.file-h i { color: #3572A5; }
+        .tree-node-label.file-md i { color: #083fa6; }
+
+        /* 詳細ビュー */
+        .details-header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .details-title {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .details-title i {
+            color: var(--primary);
+        }
+
+        .details-tag {
+            font-size: 0.75rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            padding: 0.15rem 0.5rem;
+            border-radius: 0.25rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .details-body {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        .details-body h5 {
+            color: var(--text-main);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-family: var(--font-display);
+            font-size: 1.05rem;
+        }
+
+        .details-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary);
+            text-decoration: none;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .details-link:hover {
+            text-decoration: underline;
+        }
+
+        /* 設計思想・Mermaid ダイアグラム */
+        .diag-wrapper {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 1.25rem;
+            padding: 3.5rem;
+            margin-bottom: 4rem;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            overflow-x: auto;
+        }
+
+        .mermaid {
+            background: transparent !important;
+            display: flex;
+            justify-content: center;
+        }
+
+        .design-block {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            margin-bottom: 6rem;
+        }
+
+        .design-block:last-child {
+            margin-bottom: 0;
+            grid-template-columns: 1fr 1.2fr;
+        }
+
+        .design-text h3 {
+            font-family: var(--font-display);
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            background: linear-gradient(90deg, #fff 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .design-text p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        /* アラートスタイル */
+        .alert-box {
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            font-size: 0.95rem;
+            border-left: 4px solid transparent;
+        }
+
+        .alert-box-warning {
+            background: var(--alert-warning);
+            border-left-color: #ef4444;
+            color: #fca5a5;
+        }
+
+        .alert-box-note {
+            background: var(--alert-note);
+            border-left-color: #3b82f6;
+            color: #93c5fd;
+        }
+
+        .alert-box h4 {
+            font-family: var(--font-display);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* フッター */
+        footer {
+            background: #05060b;
+            padding: 4rem 0;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .footer-logo {
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 1.4rem;
+            margin-bottom: 1.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .footer-logo i {
+            color: var(--primary);
+        }
+
+        .footer-logo span {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .copyright {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* スクロールバーカスタマイズ */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 1024px) {
+            .hero {
+                grid-template-columns: 1fr;
+                text-align: center;
+                padding-top: 8rem;
+            }
+
+            .hero-meta {
+                justify-content: center;
+            }
+
+            .visual-frame {
+                max-width: 500px;
+                margin: 0 auto;
+                transform: none;
+            }
+
+            .tree-layout {
+                grid-template-columns: 1fr;
+                height: 800px;
+            }
+
+            .tree-view {
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                height: 400px;
+            }
+
+            .tree-details {
+                height: 400px;
+            }
+
+            .design-block, .design-block:last-child {
+                grid-template-columns: 1fr;
+                gap: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow glow-1"></div>
+    <div class="bg-glow glow-2"></div>
+    <div class="bg-glow glow-3"></div>
+
+    <header id="header">
+        <div class="container nav-container">
+            <a href="#" class="logo">
+                <i class="fa-solid fa-compass"></i>
+                <span>PROJECT MAP</span>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="#overview" class="active">概要</a></li>
+                    <li><a href="#structure">フォルダ構成</a></li>
+                    <li><a href="#isolation">設計思想</a></li>
+                    <li><a href="#classes">クラス構造</a></li>
+                    <li><a href="#loop">協調動作</a></li>
+                    <li><a href="#collision">衝突判定</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 概要ヒーロー -->
+    <section class="hero" id="overview">
+        <div class="container hero">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    3D Game Sample<br>
+                    <span>Project Map</span>
+                </h1>
+                <p class="hero-desc">
+                    本ドキュメントは、C++とDxLibで構成された3Dアクションゲーム基礎開発・教育用プロジェクトの見取り図です。隔離設計されたDxLibCommonラッパー、Unityライクな GameObject - Transform クラス構造、二重の当たり判定システムなど、フレームワークを俯瞰して理解するためのドキュメントです。
+                </p>
+                <div class="hero-meta">
+                    <span><i class="fa-solid fa-code"></i> Language: C++ (x64)</span>
+                    <span><i class="fa-solid fa-gamepad"></i> Library: DxLib 3.24f</span>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="visual-frame">
+                    <img src="key_visual.png" alt="キービジュアル">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- フォルダ構成ツリー -->
+    <section id="structure">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Directory Structure</span>
+                <h2 class="section-title">フォルダ構成と各ファイルの役割</h2>
+                <p class="section-subtitle">ファイルをクリックすると、その役割と主要メンバの詳細が右側に表示されます。</p>
+            </div>
+
+            <div class="tree-layout">
+                <!-- ツリービュー -->
+                <div class="tree-view">
+                    <ul>
+                        <li class="tree-node">
+                            <span class="tree-node-label folder" onclick="toggleFolder(this)"><i class="fa-solid fa-folder-open"></i> cpp_3d_game (Root)</span>
+                            <ul class="tree-children">
+                                <li class="tree-node"><span class="tree-node-label file file-md" onclick="showDetails('main')"><i class="fa-solid fa-file-code"></i> main.cpp</span></li>
+                                <li class="tree-node"><span class="tree-node-label file file-h" onclick="showDetails('common')"><i class="fa-solid fa-file-shield"></i> DxLibCommon.h / .cpp</span></li>
+                                <li class="tree-node"><span class="tree-node-label file file-h" onclick="showDetails('vector')"><i class="fa-solid fa-cube"></i> Vector3.h</span></li>
+                                <li class="tree-node"><span class="tree-node-label file file-h" onclick="showDetails('quaternion')"><i class="fa-solid fa-sync"></i> Quaternion.h</span></li>
+                                <li class="tree-node"><span class="tree-node-label file file-h" onclick="showDetails('transform')"><i class="fa-solid fa-network-wired"></i> Transform.h</span></li>
+                                <li class="tree-node"><span class="tree-node-label file file-h" onclick="showDetails('gameobject')"><i class="fa-solid fa-cubes"></i> GameObject.h</span></li>
+                                <li class="tree-node"><span class="tree-node-label file file-cpp" onclick="showDetails('cube')"><i class="fa-solid fa-box"></i> Cube.h / .cpp</span></li>
+                                <li class="tree-node"><span class="tree-node-label file file-cpp" onclick="showDetails('player')"><i class="fa-solid fa-user"></i> Player.h / .cpp</span></li>
+                                <li class="tree-node"><span class="tree-node-label file file-cpp" onclick="showDetails('enemy')"><i class="fa-solid fa-robot"></i> Enemy.h / .cpp</span></li>
+                                <li class="tree-node"><span class="tree-node-label file file-cpp" onclick="showDetails('enemymgr')"><i class="fa-solid fa-users-cog"></i> EnemyManager.h / .cpp</span></li>
+                                <li class="tree-node"><span class="tree-node-label file file-cpp" onclick="showDetails('bullet')"><i class="fa-solid fa-meteor"></i> Bullet.h / .cpp</span></li>
+                                <li class="tree-node"><span class="tree-node-label file file-cpp" onclick="showDetails('bulletmgr')"><i class="fa-solid fa-sliders"></i> BulletManager.h / .cpp</span></li>
+                                <li class="tree-node"><span class="tree-node-label file file-cpp" onclick="showDetails('collisionmgr')"><i class="fa-solid fa-burst"></i> CollisionManager.h / .cpp</span></li>
+                                <li class="tree-node">
+                                    <span class="tree-node-label folder" onclick="toggleFolder(this)"><i class="fa-solid fa-folder"></i> Resources</span>
+                                    <ul class="tree-children" style="display: none;">
+                                        <li class="tree-node"><span class="tree-node-label file" onclick="showDetails('resources')"><i class="fa-solid fa-image"></i> Player / Enemy モデル等</span></li>
+                                    </ul>
+                                </li>
+                                <li class="tree-node">
+                                    <span class="tree-node-label folder" onclick="toggleFolder(this)"><i class="fa-solid fa-folder"></i> External</span>
+                                    <ul class="tree-children" style="display: none;">
+                                        <li class="tree-node"><span class="tree-node-label file" onclick="showDetails('external')"><i class="fa-solid fa-folder-closed"></i> DxLib SDK本体</span></li>
+                                    </ul>
+                                </li>
+                                <li class="tree-node"><span class="tree-node-label file file-md" onclick="showDetails('claude')"><i class="fa-solid fa-book-open"></i> CLAUDE.md</span></li>
+                                <li class="tree-node"><span class="tree-node-label file file-md" onclick="showDetails('textbook')"><i class="fa-solid fa-graduation-cap"></i> 01_00.md 〜 01_04.md</span></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 詳細ビュー -->
+                <div class="tree-details" id="details-panel">
+                    <div class="tree-details-empty">
+                        <i class="fa-regular fa-folder-open"></i>
+                        <p>ファイルを選択すると詳細が表示されます</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 最重要設計思想：DxLib隔離パターン -->
+    <section id="isolation">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Design Pattern</span>
+                <h2 class="section-title">最重要設計思想：DxLib隔離パターン</h2>
+                <p class="section-subtitle">ビルドの競合を防ぎ、クリーンなC++標準コードを守るためのモジュール化アプローチ。</p>
+            </div>
+
+            <div class="design-block">
+                <div class="design-text">
+                    <h3>隔離する理由とメリット</h3>
+                    <p>
+                        <code>DxLib.h</code> は内部で Windows API の主要ヘッダである <code>&lt;windows.h&gt;</code> をインクルードします。これにより、<code>min</code> や <code>max</code> などの競合を引き起こしやすいマクロが定義され、C++標準ライブラリ（特に <code>&lt;algorithm&gt;</code> など）と名前衝突を起こします。
+                    </p>
+                    <p>
+                        本プロジェクトでは、すべてのDxLib依存APIを <code>DxLibCommon</code> にのみインクルードさせ、他のクラスからは間接的にラップされたAPIを実行する手法を採用しています。
+                    </p>
+                    <div class="alert-box alert-box-note">
+                        <h4><i class="fa-solid fa-info-circle"></i> アーキテクチャの境界</h4>
+                        <p>main.cppやPlayer.cppなどの各種ゲームオブジェクトは、<code>DxLibCommon.h</code>に定義されたAPIのみを参照し、<code>DxLib.h</code>のヘッダをインクルードしません。</p>
+                    </div>
+                </div>
+                <div class="diag-wrapper">
+                    <pre class="mermaid">
+                    graph TD
+                        Main[main.cpp] --> |利用| DxLibCommonH[DxLibCommon.h]
+                        Player[Player.cpp] --> |利用| DxLibCommonH
+                        Cube[Cube.cpp] --> |利用| DxLibCommonH
+                        Enemy[Enemy.cpp] --> |利用| DxLibCommonH
+                        Bullet[Bullet.cpp] --> |利用| DxLibCommonH
+
+                        subgraph 隔離境界
+                            DxLibCommonH
+                            DxLibCommonCpp[DxLibCommon.cpp]
+                            DxLibH[DxLib.h]
+                        end
+
+                        DxLibCommonCpp --> |ヘッダの実装| DxLibCommonH
+                        DxLibCommonCpp --> |直接インクルード| DxLibH
+                    </pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 主要クラスの構造と関連 -->
+    <section id="classes">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Class Diagram</span>
+                <h2 class="section-title">主要クラスの構造と関連</h2>
+                <p class="section-subtitle">Unityに似たコンポーネントライクな設計思想を明示的なメンバーとして保持する構造。</p>
+            </div>
+
+            <div class="diag-wrapper">
+                <pre class="mermaid">
+                classDiagram
+                    class GameObject {
+                        +string name
+                        +string tag
+                        +bool activeSelf
+                        +Transform transform
+                    }
+                    class Transform {
+                        +Vector3 position
+                        +Quaternion rotation
+                        +Vector3 localPosition
+                        +Quaternion localRotation
+                        +Vector3 localScale
+                        +Transform* parent
+                        +vector~Transform*~ children
+                    }
+                    class Cube {
+                        +GameObject gameObject
+                        +Transform transform
+                        +unsigned int color
+                        +function onCollisionEnter
+                        +function onCollisionStay
+                        +function onCollisionExit
+                        +Initialize(dxLib)
+                        +Draw(dxLib)
+                    }
+                    class Player {
+                        +Cube cube
+                        +Initialize(dxLib)
+                        +Update(dxLib, bulletManager, deltaTime)
+                        +Draw(dxLib)
+                    }
+                    class Enemy {
+                        +Cube cube
+                        +Vector3 velocity
+                        +Initialize(dxLib, position, velocity)
+                        +Update(deltaTime)
+                        +Draw(dxLib)
+                    }
+                    class Bullet {
+                        +Cube cube
+                        +Vector3 velocity
+                        +BulletOwner owner
+                        +Update(deltaTime)
+                        +Draw(dxLib)
+                    }
+                    
+                    GameObject *-- Transform
+                    Cube *-- GameObject
+                    Cube *-- Transform
+                    Player *-- Cube
+                    Enemy *-- Cube
+                    Bullet *-- Cube
+                </pre>
+            </div>
+            
+            <div class="alert-box alert-box-note" style="max-width: 900px; margin: 0 auto;">
+                <h4><i class="fa-solid fa-lightbulb"></i> 設計上のメモ</h4>
+                <p>
+                    <code>Cube</code> クラスは <code>GameObject</code> をメンバに持っており、<code>GameObject</code> も <code>Transform</code> を持っていますが、<code>Cube</code> 自体も独立した <code>Transform</code> メンバを持っています。これは描画や位置指定時に <code>Cube</code> 側の <code>Transform</code> が直接参照される実装になっています。
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ゲームループと協調動作 -->
+    <section id="loop">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Game Loop</span>
+                <h2 class="section-title">ゲームループと主要システムの協調動作</h2>
+                <p class="section-subtitle">フレーム更新、オブジェクトの状態遷移、描画パイプラインのライフサイクル。</p>
+            </div>
+
+            <div class="diag-wrapper">
+                <pre class="mermaid">
+                sequenceDiagram
+                    autonumber
+                    participant Main as WinMain (main.cpp)
+                    participant Player as Player
+                    participant BulletMgr as BulletManager
+                    participant EnemyMgr as EnemyManager
+                    participant CollisionMgr as CollisionManager
+                    participant DxLib as DxLibCommon
+
+                    loop ゲームループ
+                        DxLib ->> Main: Running() (ウィンドウ終了・ESCキー判定)
+                        Main ->> Player: Update(deltaTime, input)
+                        Note over Player, BulletMgr: スペース押下時に弾を追加
+                        Player ->> BulletMgr: Add(Ally弾)
+                        
+                        Main ->> BulletMgr: Update(deltaTime) (弾の移動・寿命処理)
+                        Main ->> EnemyMgr: Update(deltaTime, BulletManager)
+                        
+                        Note over EnemyMgr, BulletMgr: 敵と味方弾の衝突を判定<br>(AABB判定)
+                        EnemyMgr ->> BulletMgr: CheckAndKillAllyHit(enemy.cube)
+                        BulletMgr -->> EnemyMgr: 衝突した弾があれば消去し、敵もKill
+                        
+                        Main ->> CollisionMgr: Update()
+                        Note over CollisionMgr: 登録されたCubeペア同士の判定<br>(Player.cubeなど)<br>衝突状態に応じてコールバックを実行
+                        CollisionMgr ->> Player: onCollisionEnter / stay / exit
+                        
+                        Main ->> DxLib: PreDraw() (画面クリア)
+                        Main ->> DxLib: SetCamera() (カメラ追従)
+                        Main ->> Player: Draw(dxLib)
+                        Main ->> BulletMgr: Draw(dxLib)
+                        Main ->> EnemyMgr: Draw(dxLib)
+                        Main ->> DxLib: PostDraw() (ScreenFlip)
+                    end
+                </pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- 当たり判定の二重系 -->
+    <section id="collision">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Collision System</span>
+                <h2 class="section-title">当たり判定（衝突検出）の二重系</h2>
+                <p class="section-subtitle">パフォーマンスとイベント処理の柔軟性を両立するための並行システム設計。</p>
+            </div>
+
+            <div class="tree-layout" style="height: auto; grid-template-columns: 1fr 1fr;">
+                <div style="padding: 3rem; border-right: 1px solid var(--border-color);">
+                    <h3 style="font-family: var(--font-display); margin-bottom: 1.5rem; color: var(--primary);"><i class="fa-solid fa-bolt"></i> 1. マネージャーによる簡易判定</h3>
+                    <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.7;">
+                        <code>EnemyManager::Update</code> から直接 <code>BulletManager::CheckAndKillAllyHit</code> を呼び出し、AABBによる重なりをその場で計算してライフ（<code>isAlive_</code>）を操作しています。
+                    </p>
+                    <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.7; margin-top: 1rem;">
+                        <strong>用途:</strong> 弾丸や敵など、大量に生成されて即座の破棄・ヒットポイント減少のみを必要とする動的オブジェクト同士の判定に最適です（オーバーヘッドが極小）。
+                    </p>
+                </div>
+                <div style="padding: 3rem;">
+                    <h3 style="font-family: var(--font-display); margin-bottom: 1.5rem; color: var(--secondary);"><i class="fa-solid fa-code"></i> 2. CollisionManager によるイベント駆動判定</h3>
+                    <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.7;">
+                        任意の <code>Cube</code> を <code>CollisionManager::Register</code> に登録することで、登録された全てのCube間で毎フレーム <code>CheckAABB</code> が走り、<code>onCollisionEnter</code> などのイベントコールバックを相互に実行します。
+                    </p>
+                    <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.7; margin-top: 1rem;">
+                        <strong>用途:</strong> プレイヤーと地形や障害物など、衝突の瞬間（Enter）や離脱（Exit）に複雑なイベントロジックを実行したいオブジェクトの制御に最適です。
+                    </p>
+                </div>
+            </div>
+
+            <!-- ガイドライン乖離の警告 -->
+            <div class="alert-box alert-box-warning" style="margin-top: 4rem;">
+                <h4><i class="fa-solid fa-triangle-exclamation"></i> 設計ガイドライン CLAUDE.md との乖離点（注意）</h4>
+                <p style="margin-top: 0.5rem; line-height: 1.6;">
+                    <code>CLAUDE.md</code> には<b>「Transform.h で &lt;vector&gt; をインクルードしてはいけない。MSVC の STL が std::transform を引き込み、メンバ名 transform と競合してコンパイルエラーになる」</b>と警告が記載されています。
+                </p>
+                <p style="margin-top: 0.5rem; line-height: 1.6;">
+                    しかし現在の <code>Transform.h</code> の実装では <code>#include &lt;vector&gt;</code> および <code>std::vector&lt;Transform*&gt; children</code> が記述されています。現状でビルドが通っていても、将来的に環境が変わった際に <code>std::transform</code> と衝突してビルドエラーとなる可能性があるため、注意が必要です。
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-logo">
+                <i class="fa-solid fa-compass"></i>
+                3D GAME FRAMEWORK <span>PROJECT MAP</span>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2026 C++ 3D Game Programming Framework Project Map. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- スクリプト部 -->
+    <script>
+        // Mermaid初期化
+        mermaid.initialize({
+            theme: 'dark',
+            startOnLoad: true,
+            themeVariables: {
+                background: '#0f1122',
+                primaryColor: '#00f0ff',
+                lineColor: '#8f9cae',
+                actorBkg: '#1a1d36',
+                actorBorder: 'rgba(255, 255, 255, 0.08)',
+                signalColor: '#ad00ff'
+            }
+        });
+
+        // ヘッダースクロール
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('header');
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
+        // フォルダトグル
+        function toggleFolder(el) {
+            const children = el.nextElementSibling;
+            const icon = el.querySelector('i');
+            if (children) {
+                if (children.style.display === 'none') {
+                    children.style.display = 'block';
+                    icon.className = 'fa-solid fa-folder-open';
+                } else {
+                    children.style.display = 'none';
+                    icon.className = 'fa-solid fa-folder';
+                }
+            }
+        }
+
+        // ファイルデータ定義
+        const fileData = {
+            main: {
+                title: "main.cpp",
+                tag: "Main Entry",
+                desc: "ゲームループを駆動させるメインのエントリーポイント。WinMain関数を含み、各種オブジェクト・マネージャー・描画ループの初期化、更新、描画、終了処理を一括制御します。",
+                members: "<h5>主要関数</h5><ul><li><code>WinMain</code>: エントリーポイント。ゲームループの制御。</li><li><code>VectorScreenPrintf</code>: ベクトルの情報を画面デバッグ出力。</li></ul>"
+            },
+            common: {
+                title: "DxLibCommon.h / .cpp",
+                tag: "API Wrapper / Isolation",
+                desc: "DxLibの描画・制御APIをラップするクラス。プロジェクト内の他のコードから直接 <code>DxLib.h</code> をインクルードしないように隔離する極めて重要な役割を持ちます。",
+                members: "<h5>主要メンバ</h5><ul><li><code>Initialize()</code>: ウィンドウ初期化や画面バッファ設定。</li><li><code>DrawCube()</code>: 3D立方体の描画。</li><li><code>SetCamera()</code>: 3Dカメラの設定（視点・注視点）。</li></ul>"
+            },
+            vector: {
+                title: "Vector3.h",
+                tag: "Data Structure",
+                desc: "3D空間上の位置、スケール、速度などを保持するための基本的な3次元ベクトル構造体。",
+                members: "<h5>主要メンバ</h5><ul><li><code>float x, y, z</code></li></ul>"
+            },
+            quaternion: {
+                title: "Quaternion.h",
+                tag: "Data Structure",
+                desc: "3Dオブジェクトの回転状態を表現するためのクォータニオン（四元数）構造体。ジンバルロックを防止しスムーズな回転を実現します。",
+                members: "<h5>主要メンバ</h5><ul><li><code>float x, y, z, w</code></li></ul>"
+            },
+            transform: {
+                title: "Transform.h",
+                tag: "Coordinate Space",
+                desc: "オブジェクトの3D座標、回転、スケール、および階層的な親子関係を制御するクラス。",
+                members: "<h5>主要メンバ</h5><ul><li><code>Vector3 position / scale</code></li><li><code>Quaternion rotation</code></li><li><code>Transform* parent</code>: 親Transformへのポインタ。</li><li><code>std::vector&lt;Transform*&gt; children</code>: 子オブジェクト群。</li></ul>"
+            },
+            gameobject: {
+                title: "GameObject.h",
+                tag: "Object Identity",
+                desc: "ゲーム内のあらゆるオブジェクトの基盤となる基本クラス。名前、タグ、アクティブ状態（表示・更新フラグ）、Transformコンポーネントを保持します。",
+                members: "<h5>主要メンバ</h5><ul><li><code>string name / tag</code></li><li><code>bool activeSelf</code>: 有効・無効フラグ。</li><li><code>Transform transform</code>: 座標情報。</li></ul>"
+            },
+            cube: {
+                title: "Cube.h / .cpp",
+                tag: "3D Primitive",
+                desc: "3D空間上に描画される箱型モデルのクラス。AABB衝突用のバウンディングボックスとしての役割も持ち、衝突コールバック関数の登録枠を提供します。",
+                members: "<h5>主要メンバ</h5><ul><li><code>unsigned int color</code>: 描画カラー。</li><li><code>onCollisionEnter / stay / exit</code>: 衝突時に発火する関数オブジェクト。</li></ul>"
+            },
+            player: {
+                title: "Player.h / .cpp",
+                tag: "Actor Control",
+                desc: "プレイヤーキャラクターの動作、入力受付、および弾（Bullet）の発射ロジックを管理するクラス。",
+                members: "<h5>主要メンバ</h5><ul><li><code>Cube cube</code>: プレイヤーの描画モデル。</li><li><code>Update()</code>: キー入力に応じた移動・弾の生成。</li></ul>"
+            },
+            enemy: {
+                title: "Enemy.h / .cpp",
+                tag: "Actor Control",
+                desc: "敵キャラクターの動き、進行速度、状態管理を司るクラス。",
+                members: "<h5>主要メンバ</h5><ul><li><code>Cube cube</code></li><li><code>Vector3 velocity</code></li></ul>"
+            },
+            enemymgr: {
+                title: "EnemyManager.h / .cpp",
+                tag: "Manager Pattern",
+                desc: "複数の敵オブジェクトの生成、更新、描画、および当たり判定（弾 vs 敵）の連携を統括するマネージャー。",
+                members: "<h5>主要メンバ</h5><ul><li><code>std::vector&lt;Enemy&gt; enemies</code>: 管理下の敵リスト。</li><li><code>Update()</code>: 敵全体の更新および弾との簡易交差判定。</li></ul>"
+            },
+            bullet: {
+                title: "Bullet.h / .cpp",
+                tag: "Projectile",
+                desc: "プレイヤーまたは敵が発射した弾丸の進行、寿命（一定時間経過での消滅）を管理するオブジェクト。",
+                members: "<h5>主要メンバ</h5><ul><li><code>Vector3 velocity</code></li><li><code>float lifeTime</code></li></ul>"
+            },
+            bulletmgr: {
+                title: "BulletManager.h / .cpp",
+                tag: "Manager Pattern",
+                desc: "射撃された全ての弾丸の追加、移動の更新、寿命判定、および他のCubeに対する当たり判定バッチ処理を実行するマネージャー。",
+                members: "<h5>主要メンバ</h5><ul><li><code>std::vector&lt;Bullet&gt; bullets</code>: アクティブな弾丸リスト。</li><li><code>CheckAndKillAllyHit()</code>: 特定Cubeと全味方弾とのAABB重なり判定。</li></ul>"
+            },
+            collisionmgr: {
+                title: "CollisionManager.h / .cpp",
+                tag: "Collision System",
+                desc: "登録された全Cubeオブジェクト間で毎フレーム総当たりAABB判定を行い、前フレームからの状態変化（Enter, Stay, Exit）を検知して適切なコールバックを発火させる汎用システム。",
+                members: "<h5>主要メンバ</h5><ul><li><code>Register(Cube*)</code>: 判定対象の追加。</li><li><code>Update()</code>: 総当たり交差判定とイベントコールバック実行。</li></ul>"
+            },
+            resources: {
+                title: "Resources/",
+                tag: "Assets",
+                desc: "ゲーム内で使用する3Dモデルファイル（.mqo / .obj）や、マテリアル・テクスチャ（.png / .bmp / .jpg）等のリソース格納ディレクトリです。",
+                members: "<h5>主要アセット</h5><ul><li><code>BoxEnemy/</code>: 敵3Dモデル。</li><li><code>Player/</code>: プレイヤー3Dモデル。</li><li><code>Floor/</code>: 床テクスチャ。</li><li><code>Kabe/</code>: 壁モデル。</li></ul>"
+            },
+            external: {
+                title: "External/",
+                tag: "SDK / Libraries",
+                desc: "本ゲーム開発フレームワークが依存している <code>DxLib</code> SDK のヘッダーファイルと静的リンクライブラリが格納されています。",
+                members: "<h5>主要フォルダ</h5><ul><li><code>DxLib/</code>: ヘッダー群および <code>DxLib.lib</code> などの静的ライブラリファイル。</li></ul>"
+            },
+            claude: {
+                title: "CLAUDE.md",
+                tag: "Guidelines",
+                desc: "プロジェクトの開発ルール、ビルドコマンド（MSBuild）、コーディング命名規則、そして <code>Transform.h</code> の vector 衝突競合に関する警告などが明記された開発者向けガイドライン。",
+                members: "<h5>記載内容</h5><ul><li>ビルドとテストコマンド</li><li>命名規則（変数、関数、クラス）</li><li>Transformのインクルード回避警告</li></ul>"
+            },
+            textbook: {
+                title: "01_00.md 〜 01_04.md",
+                tag: "Learning Material",
+                desc: "基本クラス（Vector/Transform）の作成から始まり、3D描画、カメラ軌道操作、当たり判定、マネージャーパターン、リファクタリングまで順を追って学習できる初心者向けの教材ドキュメント群。",
+                members: "<h5>カリキュラム</h5><ul><li>01_00: 3D表示の基礎</li><li>01_01: 入力とカメラ制御</li><li>01_02: 当たり判定基礎</li><li>01_03: マネージャーパターン</li><li>01_04: リファクタリング</li></ul>"
+            }
+        };
+
+        // 詳細情報表示
+        function showDetails(key) {
+            const data = fileData[key];
+            const panel = document.getElementById('details-panel');
+            
+            // アクティブクラス切り替え
+            document.querySelectorAll('.tree-node-label').forEach(el => {
+                el.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+
+            if (data) {
+                panel.innerHTML = `
+                    <div class="details-header">
+                        <div class="details-title">
+                            <i class="fa-solid fa-file-code"></i> ${data.title}
+                        </div>
+                        <span class="details-tag">${data.tag}</span>
+                    </div>
+                    <div class="details-body">
+                        <p>${data.desc}</p>
+                        ${data.members}
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

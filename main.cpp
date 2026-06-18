@@ -5,6 +5,10 @@
 #include <cmath>
 #include <format>
 
+#pragma warning(push)
+#pragma warning(disable: 4996) // csv.h が strncpy/fopen 等の安全版以外を使用
+#include "csv.h"
+#pragma warning(pop)
 #include "DxLibCommon.h"
 #include "Vector3.h"
 #include "Cube.h"
@@ -71,9 +75,32 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     BulletManager bulletManager;
 
-    // 試験用Enemy: Z=-8 から+Z方向へゆっくり移動
+    // enemy_data.csv からグリッド配置を読み込む
+    // 行 = Z方向 (行0が最遠、行26が最近)、列 = X方向 (列4が中心)
+    static const float kCellWidth  = 5.0f;
+    static const float kCellDepth  = 5.0f;
+    static const float kEnemyVelZ  = 2.0f;
+    static const int   kColCenter  = 4;
+    static const int   kTotalRows  = 27;
+
     EnemyManager enemyManager;
-    enemyManager.Add(dxLibCommon, { 0.0f, 0.0f, -8.0f }, { 0.0f, 0.0f, 2.0f });
+    {
+        io::LineReader reader("Resources/enemy_data.csv");
+        int row = 0;
+        while (char* line = reader.next_line()) {
+            int col = 0;
+            for (char* p = line; *p; ++p) {
+                if (*p == 'e' || *p == 'E') {
+                    float x = (col - kColCenter) * kCellWidth;
+                    float z = -(kTotalRows - row) * kCellDepth;
+                    enemyManager.Add(dxLibCommon, { x, 0.0f, z }, { 0.0f, 0.0f, kEnemyVelZ });
+                } else if (*p == ',') {
+                    ++col;
+                }
+            }
+            ++row;
+        }
+    }
 
     auto prevTime = std::chrono::steady_clock::now();
 
